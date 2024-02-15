@@ -1,10 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-
 # Levelnberg-Marquardt Procedure
-
-
 def lm_fit(a0,b0,R0,lmbd0,F0,X,Y):
     # LM iteration parameters
     alpha = 0.1
@@ -67,21 +64,29 @@ def lm_fit(a0,b0,R0,lmbd0,F0,X,Y):
                 bk = bk_1
                 Rk = Rk_1
                 Fk = Fk_1
-            
+        residual = np.sqrt(np.linalg.norm(g,2))
+    return ak, bk, Rk, residual
 
-    return ak, bk, Rk
+def circle_fit(U,V):
+    # Formulate least squares problem ||Ax-b||^2
+    A = np.column_stack((U**2 + V**2,U,V))
+    b = np.ones_like(U)
+
+    solution, residuals, rank, singular_value = np.linalg.lstsq(A,b,rcond=None)
+
+    return solution, residuals.squeeze()
 
 def circle_fitting():
     # Define true circle parameters
-    R = 430
+    R = 40
     N = 2000
-    a = 30
-    b = 22
+    a = 0
+    b = 0
     C = 0
 
     # Create noisy circle
     mu = 0.0
-    var = 500
+    var = 20
     k = 0.5
     stdev = np.sqrt(var)
     theta = np.linspace(0,2*np.pi,N)
@@ -89,6 +94,7 @@ def circle_fitting():
 
     eps_noise_x = k*np.random.normal(mu,stdev,(N,1))
     eps_noise_y = k*np.random.normal(mu,stdev,(N,1))
+    print(eps_noise_x)
 
     noisy_circle = np.column_stack([a + R*np.cos(theta) + eps_noise_x,b + R*np.sin(theta) + eps_noise_y])
     X = noisy_circle[:,0]
@@ -109,21 +115,48 @@ def circle_fitting():
     #Compute f0
     F0 = np.sum((np.sqrt((X-a0)**2+(Y-b0)**2) - R0)**2)
     
-    ak,bk,Rk = lm_fit(a0,b0,R0,lmbd,F0,X,Y)
+    ak,bk,Rk,res = lm_fit(a0,b0,R0,lmbd,F0,X,Y)
+    x,err = circle_fit(X,Y)
 
-    print(ak)
-    print(bk)
-    print(Rk)
+    A = x[0]
+    B = x[1]
+    C = x[2]
+    D = -1
+
+    print(f'A: {A}')
+    print(f'B: {B}')
+    print(f'C: {C}')
+
+
+
+    ac = -B/(2*A)
+    bc = -C/(2*A)
+    rcsq = (B**2 + C**2 -4*A*D)/(4*A**2)
+    rc = np.sqrt(rcsq)
+
+    constr = B**2 + C**2 - 4*A*D
+
+    print(f'constr: {constr}')
+    print(f'a: {ak}')
+    print(f'b: {bk}')
+    print(f'R: {Rk}')
+    print(f'res: {res}')
+    print(f'err: {err}')
 
     alpha = np.linspace(0,2*np.pi,500)
 
     circle = np.column_stack([ak*np.ones_like(alpha),bk*np.ones_like(alpha)]) + np.column_stack([Rk*np.cos(alpha),Rk*np.sin(alpha)])
-    Xt = circle[:,0:1]
-    Yt = circle[:,1:]
+    circ = np.column_stack([ac*np.ones_like(alpha),bc*np.ones_like(alpha)]) + np.column_stack([rc*np.cos(alpha),rc*np.sin(alpha)])
+    Xt = circle[:,0]
+    Yt = circle[:,1]
+
+    Xc = circ[:,0]
+    Yc = circ[:,1]
 
     axs.plot(Xt,Yt,'r')
+    axs.plot(Xc,Yc,'k--')
     plt.show()
-    
+
 if __name__ == "__main__":
 
     circle_fitting()
