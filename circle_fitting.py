@@ -1,6 +1,17 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+def geometric_distance(a,b,R,X,Y):
+    A = 1/(2*R)
+    B = -2*A*A
+    C = -2*A*b
+    D = (B**2 + C**2 -1)/(4*A)
+
+    Pi = A*(X**2 + Y**2) + B*X + C*Y + D
+    
+    di = 2*Pi/(1+np.sqrt(1 + 4*A*Pi))
+
+    return di
 # Levelnberg-Marquardt Procedure
 def lm_fit(a0,b0,R0,lmbd0,F0,X,Y):
     # LM iteration parameters
@@ -64,8 +75,11 @@ def lm_fit(a0,b0,R0,lmbd0,F0,X,Y):
                 bk = bk_1
                 Rk = Rk_1
                 Fk = Fk_1
-        residual = np.sqrt(np.linalg.norm(g,2))
-    return ak, bk, Rk, residual
+        di = geometric_distance(ak,bk,Rk,X,Y)
+
+        mse = np.sum(di**2)/len(di)
+        
+    return ak, bk, Rk, mse
 
 def circle_fit(U,V):
     # Formulate least squares problem ||Ax-b||^2
@@ -79,17 +93,17 @@ def circle_fit(U,V):
 def circle_fitting():
     # Define true circle parameters
     R = 40
-    N = 2000
+    N = 20000
     a = 0
     b = 0
     C = 0
 
     # Create noisy circle
     mu = 0.0
-    var = 20
+    var = 4
     k = 0.5
     stdev = np.sqrt(var)
-    theta = np.linspace(0,2*np.pi,N)
+    theta = np.random.normal(loc=np.linspace(0,2*np.pi,N),scale=stdev)
     theta = np.reshape(theta,(N,1))
 
     eps_noise_x = k*np.random.normal(mu,stdev,(N,1))
