@@ -1,9 +1,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+# Computing orthogonal distance of a fitted circle
+# Circle of the form (x-a)^2 + (y-b)^2 = R^2 is converted to geometric parameters
+# to compute the distance of observed data X,Y to the fitted circle with parameters a,b,R
 def geometric_distance(a,b,R,X,Y):
+    # Convert algebraic parameters a,b,R to geometric parameters A,B,C,D
     A = 1/(2*R)
-    B = -2*A*A
+    B = -2*A*a
     C = -2*A*b
     D = (B**2 + C**2 -1)/(4*A)
 
@@ -12,6 +16,7 @@ def geometric_distance(a,b,R,X,Y):
     di = 2*Pi/(1+np.sqrt(1 + 4*A*Pi))
 
     return di
+
 # Levelnberg-Marquardt Procedure
 def lm_fit(a0,b0,R0,lmbd0,F0,X,Y):
     # LM iteration parameters
@@ -78,7 +83,7 @@ def lm_fit(a0,b0,R0,lmbd0,F0,X,Y):
         di = geometric_distance(ak,bk,Rk,X,Y)
 
         mse = np.sum(di**2)/len(di)
-        
+
     return ak, bk, Rk, mse
 
 def circle_fit(U,V):
@@ -100,7 +105,7 @@ def circle_fitting():
 
     # Create noisy circle
     mu = 0.0
-    var = 4
+    var = 25
     k = 0.5
     stdev = np.sqrt(var)
     theta = np.random.normal(loc=np.linspace(0,2*np.pi,N),scale=stdev)
